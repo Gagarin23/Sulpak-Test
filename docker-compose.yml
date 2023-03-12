@@ -1,0 +1,95 @@
+version: '3'
+services:
+  node1:
+    image: gagarin23/sulpak-test
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+    volumes:
+      - ./app/appsettings.json:/app/appsettings.json
+      - ./app/server.crt:/app/server.crt
+      - ./app/server.key:/app/server.key
+    depends_on:
+      - db    
+    networks:
+      - sulpak_network
+
+  node2:
+    image: gagarin23/sulpak-test
+    ports:
+      - "6000:5000"
+      - "6001:5001"
+    volumes:
+      - ./app/appsettings.json:/app/appsettings.json
+      - ./app/server.crt:/app/server.crt
+      - ./app/server.key:/app/server.key
+    depends_on:
+      - db    
+    networks:
+      - sulpak_network
+    
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      MSSQL_SA_PASSWORD: "Password!@#"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    networks:
+      - sulpak_network
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "6831:6831/udp" # Accepts jaeger.thrift in compact Thrift protocol used by most current Jaeger clients.
+      - "5778:5778" # HTTP. Serves SDK configs, namely sampling strategies at /sampling
+      - "14269:14269" # HTTP. Admin port: health check at / and metrics at /metrics.
+      - "16686:16686" # endpoints and Jaeger UI
+      - "14250:14250" # gRPC. Used by jaeger-agent to send spans in model.proto format
+      - "14268:14268" # HTTP. Accepts spans directly from clients in jaeger.thrift format with binary thrift protocol (POST to /api/traces). Also serves sampling policies at /api/sampling, similar to Agent's port 5778.
+      - "4317:4317" # gRPC. Accepts traces in OpenTelemetry OTLP format if --collector.otlp.enabled=true
+      - "4318:4318" # HTTP. Accepts traces in OpenTelemetry OTLP format if --collector.otlp.enabled=true
+    environment:
+      SPAN_STORAGE_TYPE: elasticsearch
+      ES_SERVER_URLS: http://elasticsearch:9200
+    networks:
+      - sulpak_network
+    depends_on:
+      - elasticsearch
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.10.0
+    ports:
+      - "9200:9200"
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: false
+      ES_JAVA_OPTS: "-Xms1g -Xmx1g"
+    networks:
+      - sulpak_network
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: "secret"
+    volumes:
+      - ./grafana:/var/lib/grafana
+    networks:
+      - sulpak_network
+
+volumes:
+  sqlserver-data:
+  elasticsearch-data:
+
+networks:
+  sulpak_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.2.0/24

@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <LangVersion>default</LangVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="EFCore.BulkExtensions" Version="7.0.1" />
+        <PackageReference Include="Hangfire.AspNetCore" Version="1.7.33" />
+        <PackageReference Include="Hangfire.Dashboard.Authorization" Version="3.0.1" />
+        <PackageReference Include="Hangfire.SqlServer" Version="1.7.33" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.3" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.3">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Application\Application.csproj" />
+    </ItemGroup>
+
+</Project>
